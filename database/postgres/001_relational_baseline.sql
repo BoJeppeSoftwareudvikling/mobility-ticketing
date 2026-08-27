@@ -22,6 +22,7 @@ create table route_stops (
     stop_id text not null references stops(id),
     stop_sequence integer not null,
     primary key (route_id, stop_id),
+    unique (route_id, stop_sequence),
     constraint route_stops_sequence_positive check (stop_sequence > 0)
 );
 
