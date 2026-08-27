@@ -14,14 +14,14 @@ limit 20;
 
 -- Bo
 select
-    t.route_id,
-    t.stop_id,
-    t.stop_sequence,
-    name
-from route_stops t
-join stops on t.stop_id = stops.id
-where t.route_id = :route_id
-order by t.stop_sequence;
+    rs.route_id,
+    rs.stop_id,
+    rs.stop_sequence,
+    s.name as name
+from route_stops rs
+join stops on rs.stop_id = stops.id
+where rs.route_id = :route_id
+order by rs.stop_sequence;
 
 -- Jeppe
 with params as (
