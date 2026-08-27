@@ -29,7 +29,7 @@ on conflict do nothing;
 
 insert into trips (id, route_id, service_date, scheduled_departure_utc, status) values
     ('TRIP-M2-1', 'LINE-M2', '2026-01-01', '2026-01-01 06:00:00', 'active'),
-    ('TRIP-M2-2', 'LINE-M2', '2026-01-01', '2026-01-01 06:00:00', 'active'),
-    ('TRIP-5C-1', 'LINE-5C', '2026-01-01', '2026-01-01 06:00:00', 'active'),
-    ('TRIP-5C-2', 'LINE-5C', '2026-01-01', '2026-01-01 06:00:00', 'active')
+    ('TRIP-M2-2', 'LINE-M2', '2026-01-01', '2026-01-01 06:10:00', 'active'),
+    ('TRIP-5C-1', 'LINE-5C', '2026-01-01', '2026-01-01 06:50:00', 'active'),
+    ('TRIP-5C-2', 'LINE-5C', '2026-01-01', '2026-01-01 06:55:00', 'active')
 on conflict do nothing;
