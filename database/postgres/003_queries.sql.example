@@ -11,6 +11,8 @@ limit 20;
 
 -- Query 2: ordered route stops
 -- TODO: join route_stops to stops and order by stop_sequence.
+
+-- Bo
 select
     t.route_id,
     t.stop_id,
@@ -21,9 +23,26 @@ join stops on t.stop_id = stops.id
 where t.route_id = :route_id
 order by t.stop_sequence;
 
+-- Jeppe
+with params as (
+    select 'LINE-M2'::text as route_id
+)
+select
+    rs.route_id,
+    rs.stop_sequence,
+    s.id as stop_id,
+    s.name as stop_name,
+    s.city_id
+from route_stops rs
+join stops s on s.id = rs.stop_id
+where rs.route_id = (select route_id from params)
+order by rs.stop_sequence;
+
+
 -- Query 3: routes and trip count, including routes with zero trips
 -- TODO: preserve routes with no matching trips for the supplied service date.
 
+-- Bo
 select
     routes.id,
     count(trips.id) as trip_count
@@ -32,3 +51,19 @@ left join trips
     on trips.route_id = routes.id
     and trips.service_date = :service_date
 group by routes.id;
+
+-- Jeppe
+with params as (
+    select date '2026-01-01' as service_date
+)
+select
+    r.id,
+    r.short_name,
+    count(t.id) as trip_count
+from routes r
+left join trips t
+    on t.route_id = r.id
+    and t.service_date = (select service_date from params)
+group by r.id, r.short_name
+order by r.id;
+
