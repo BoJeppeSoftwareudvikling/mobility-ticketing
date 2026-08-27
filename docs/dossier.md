@@ -1,8 +1,7 @@
-#Explanations
+# Explanations
 
-## route_stops has two possible primary keys
+## route_stops primary key choice
 
-Right now, the primary key for route_stops means that a stop may only occur once per route. We're modelling routes without a loop in this slice, that's why this primary key is chosen.
+`route_stops` is a linking table for the many-to-many relationship between `routes` and `stops`. We chose the composite primary key `(route_id, stop_id)`, so in this slice a stop can appear only once on a route.
 
-The other option is (route_id, stop_sequence) which would allow more stops on the same routes, for example if it's a there and return trip (A -> B -> A).
-
+The alternative is `(route_id, stop_sequence)`. That would allow the same stop to appear more than once on the same route, for example `A -> B -> A`, while still preserving stop order.
