@@ -5,7 +5,7 @@
 | Mappe | Indhold |
 |---|---|
 | `mobilityticketing-lecture-1-starter/` | Relationel model, seed og køreplan-queries |
-| `mobilityticketing-lecture-2-starter/` | Lecture 2 |
+| `mobilityticketing-lecture-2-starter/` | Permissive ticketing schema, domain invariants, and database-enforced constraints |
 
 Kør altid kommandoer **inde i** den relevante mappe, ikke fra roden:
 
