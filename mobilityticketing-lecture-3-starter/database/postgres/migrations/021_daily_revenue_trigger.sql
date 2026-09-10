@@ -1,6 +1,3 @@
--- Copy this file to 021_daily_revenue_trigger.sql and apply it.
--- This is deliberately incomplete. Document the behaviour before extending it.
-
 create table daily_revenue_by_operator (
     operator_id text not null references operators(id),
     revenue_date date not null,
@@ -45,6 +42,3 @@ create trigger payments_daily_revenue_after_insert
 after insert on payments
 for each row
 execute function add_inserted_payment_to_daily_revenue();
-
--- TODO: analyse corrections, refunds, deletes, initial backfill, and duplicate delivery.
--- Do not add more trigger branches before documenting the behaviour.

@@ -1,5 +1,3 @@
--- Copy this file to 022_daily_captured_revenue.sql and apply it.
-
 create materialized view daily_captured_revenue as
 select
     r.operator_id,
@@ -16,6 +14,3 @@ with no data;
 
 create unique index daily_captured_revenue_key
     on daily_captured_revenue (operator_id, revenue_date);
-
--- Run explicitly when the source data should become visible:
--- refresh materialized view daily_captured_revenue;
