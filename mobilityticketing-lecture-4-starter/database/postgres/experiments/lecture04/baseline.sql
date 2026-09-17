@@ -11,3 +11,8 @@ do $$ begin
   raise exception 'Unresolved product reference';
  end if;
 end $$;
+
+select t.id, t.product_code
+from tickets t
+left join products p on p.code = t.product_code
+where t.product_code is null or p.code is null;
