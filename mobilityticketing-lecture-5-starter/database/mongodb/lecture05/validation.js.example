@@ -1,0 +1,7 @@
+const m = db.getSiblingDB("mobility");
+const invalid = m.journey_search.findOne({ _id: "LAB05:A" });
+
+invalid._id = "LAB05:INVALID";
+
+// Change one field so the document becomes invalid.
+// Then try m.journey_search.insertOne(invalid).
