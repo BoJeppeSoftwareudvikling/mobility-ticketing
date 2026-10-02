@@ -1,0 +1,13 @@
+const m = db.getSiblingDB("mobility");
+
+const query = {
+  cityId: "CPH",
+  fromStopId: "STOP-NORREPORT",
+  toStopId: "STOP-AIRPORT",
+  "departures.status": "Scheduled",
+
+  // TODO: add departures.departureUtc
+  // as a separate condition.
+};
+
+printjson(m.journey_search.find(query).toArray());
