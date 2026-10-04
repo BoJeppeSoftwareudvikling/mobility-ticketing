@@ -1,0 +1,19 @@
+100 departures:
+{
+  bytes: 12307,
+  departures: 100
+}
+
+1,000 departures:
+{
+  bytes: 123007,
+  departures: 1000
+}
+
+Comparison:
+{
+  additionalBytes: 110700,
+  sizeRatio: 9.994880962054115
+}
+
+Conclusion: departures must have a bounded document boundary, for example a service-date bucket, or be stored separately.
