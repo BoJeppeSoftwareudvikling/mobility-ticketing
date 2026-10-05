@@ -12,3 +12,5 @@ const query = {
   };
 
 printjson(m.journey_search.find(query).toArray());
+
+// End of lecture 5 script.
