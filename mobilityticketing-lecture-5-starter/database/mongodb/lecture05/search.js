@@ -35,3 +35,5 @@ const start = ISODate("2026-10-02T06:00:00Z");
 const end = ISODate("2026-10-02T07:00:00Z");
 
 printjson(search("CPH", "STOP-NORREPORT", "STOP-AIRPORT", start, end));
+
+// End of lecture 5 script.

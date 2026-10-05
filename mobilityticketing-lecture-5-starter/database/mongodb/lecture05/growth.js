@@ -38,3 +38,5 @@ printjson(
     },
   ]).toArray(),
 );
+
+// End of lecture 5 script.
