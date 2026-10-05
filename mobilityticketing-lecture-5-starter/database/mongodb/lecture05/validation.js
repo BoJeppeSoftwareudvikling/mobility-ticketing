@@ -23,3 +23,5 @@ for (const doc of [badDate, badSeats]) {
     print(doc._id, e.code, e.codeName);
   }
 }
+
+// End of lecture 5 script.

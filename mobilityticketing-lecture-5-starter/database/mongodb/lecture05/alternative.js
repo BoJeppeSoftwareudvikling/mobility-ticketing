@@ -23,3 +23,5 @@ for (const journey of journeys) {
     });
   }
 }
+
+// End of lecture 5 script.

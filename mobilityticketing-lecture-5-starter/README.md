@@ -14,3 +14,9 @@ Stop the databases:
 ```bash
 docker compose down
 ```
+
+Run a script from this folder after the databases are up:
+
+```bash
+mongosh "mongodb://localhost:27017/mobility" database/mongodb/lecture05/search.js
+```

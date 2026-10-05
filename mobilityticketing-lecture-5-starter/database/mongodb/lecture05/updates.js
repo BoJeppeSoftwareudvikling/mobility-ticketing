@@ -20,3 +20,5 @@ printjson(
     },
   ),
 );
+
+// End of lecture 5 script.
