@@ -4,7 +4,7 @@ Four lecture slices live in this repository. Each folder is its own Compose proj
 
 **Group members:** Bo Djernis Schrøder (bodsch01) & Jeppe Kjelgaard Lynge Hansen (jephan01)
 
-**Submitted commit:** f26b3efc2db67e5dae7925691abbed4392796d14
+**Submitted commit:** d2605e826e484cb49ec9af2f1cc0472044e9998f
 
 **Setup and reset:** use the lecture README in the table. From that folder, run `docker compose down -v` and then `docker compose up -d`.
 
@@ -19,11 +19,7 @@ Four lecture slices live in this repository. Each folder is its own Compose proj
 | [Lecture 4](mobilityticketing-lecture-4-starter/README.md) | migration stages and verification   | [expand](mobilityticketing-lecture-4-starter/database/postgres/migrations/030_expand_product_identity.sql), [backfill](mobilityticketing-lecture-4-starter/database/postgres/migrations/031_backfill_ticket_product.sql), [evidence](mobilityticketing-lecture-4-starter/docs/evidence/lecture04/README.md)                                                                                                                                                                          |
 
 
-
-
 ## Two decisions worth discussing
-
-
 
 ### Lecture 1
 
