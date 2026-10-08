@@ -18,7 +18,7 @@ public record Journey(
     [property: JsonRequired] decimal Price,
     [property: JsonRequired] string Currency);
 
-public sealed class MongoJourneySearch
+public sealed class MongoJourneySearch : IJourneySource
 {
     private readonly IMongoCollection<BsonDocument> collection;
     private int calls;
