@@ -1,0 +1,5 @@
+-- TODO: Adapt your new writer to use product_id without tickets.product_code.
+-- Keep id, user_id, trip_id, ticket_code, status, validity dates, price and
+-- currency in the insert. Use a fresh ticket ID and ticket code.
+-- Test after removing the old column. If you try it while that column still
+-- exists, check whether its NOT NULL constraint allows the insert.
