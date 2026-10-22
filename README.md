@@ -1,15 +1,19 @@
 # Compulsory Assignment 1 review guide
 
-Four lecture slices live in this repository. Each folder is its own Compose project. The database, user, and password are `mobility`, on `localhost:5432`. Run commands inside the lecture folder, not from the repository root. Stop the other lecture containers first; they share that port.
+This repository has four lecture slices, and each folder is a separate Compose project. All four use the database, user, and password `mobility` on `localhost:5432`. Run commands from inside a lecture folder, not from the repository root. Because the slices share the port, stop the containers from the other lectures first.
 
-**Group members:** Bo Djernis Schrøder (bodsch01) & Jeppe Kjelgaard Lynge Hansen (jephan01)
+Group members are Bo Djernis Schrøder (bodsch01) and Jeppe Kjelgaard Lynge Hansen (jephan01).
 
-**Submitted commit:** d2605e826e484cb49ec9af2f1cc0472044e9998f
+The submitted commit is `d2605e826e484cb49ec9af2f1cc0472044e9998f`.
 
-**Setup and reset:** use the lecture README in the table. From that folder, run `docker compose down -v` and then `docker compose up -d`.
+For setup, follow the lecture README linked in the table below. To reset a slice, run these commands from its folder:
+
+```bash
+docker compose down -v
+docker compose up -d
+```
 
 ## Where to find the work
-
 
 | Lecture                                                    | Contents                            | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ---------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -18,33 +22,58 @@ Four lecture slices live in this repository. Each folder is its own Compose proj
 | [Lecture 3](mobilityticketing-lecture-3-starter/README.md) | reporting experiment and comparison | [query](mobilityticketing-lecture-3-starter/database/postgres/queries/base_revenue.sql), [function](mobilityticketing-lecture-3-starter/database/postgres/migrations/020_reporting_function.sql), [trigger](mobilityticketing-lecture-3-starter/database/postgres/migrations/021_daily_revenue_trigger.sql), [view](mobilityticketing-lecture-3-starter/database/postgres/migrations/022_daily_captured_revenue.sql), [results](mobilityticketing-lecture-3-starter/docs/results.md) |
 | [Lecture 4](mobilityticketing-lecture-4-starter/README.md) | migration stages and verification   | [expand](mobilityticketing-lecture-4-starter/database/postgres/migrations/030_expand_product_identity.sql), [backfill](mobilityticketing-lecture-4-starter/database/postgres/migrations/031_backfill_ticket_product.sql), [evidence](mobilityticketing-lecture-4-starter/docs/evidence/lecture04/README.md)                                                                                                                                                                          |
 
-
 ## Two decisions worth discussing
 
 ### Lecture 1
 
-**A stop appears once on a route.** Primary key `(route_id, stop_id)` on `route_stops`. The alternative is `(route_id, stop_sequence)`, which would allow the same stop twice while still keeping order. This slice only needs an ordered stop list for the timetable workloads, and a loop is not part of the current routes. Evidence: `[001_relational_baseline.sql](mobilityticketing-lecture-1-starter/database/postgres/001_relational_baseline.sql)`, `[docs/dossier.md](mobilityticketing-lecture-1-starter/docs/dossier.md)`.
+**A stop appears once on a route.** The primary key on `route_stops` is `(route_id, stop_id)`. The alternative was `(route_id, stop_sequence)`, which keeps the order and lets the same stop appear twice. The timetable workloads in this slice only need an ordered list of stops, and none of the current routes loop.
 
-**Routes with no trips still appear in the count report.** Query 3 uses `LEFT JOIN` from `routes` to `trips` with the service date in the join condition. The alternative is `INNER JOIN`, which would hide routes that have no trips on that date. Route maintenance needs the full route list, including zero-trip days. Evidence: `[003_queries.sql.example](mobilityticketing-lecture-1-starter/database/postgres/003_queries.sql.example)`.
+Evidence is in [001_relational_baseline.sql](mobilityticketing-lecture-1-starter/database/postgres/001_relational_baseline.sql) and [docs/dossier.md](mobilityticketing-lecture-1-starter/docs/dossier.md).
+
+**The count report includes routes with no trips.** Query 3 uses a `LEFT JOIN` from `routes` to `trips` and puts the service date in the join condition. An `INNER JOIN` would hide routes that have no trips on that date. Route maintenance needs every route, including days with zero trips.
+
+Evidence is in [003_queries.sql.example](mobilityticketing-lecture-1-starter/database/postgres/003_queries.sql.example).
 
 ### Lecture 2
 
-**Validations must match both ticket id and ticket code.** Composite foreign key `(ticket_id, ticket_code)` on `validations`. The alternative is a foreign key on `ticket_id` only. A gate scan can carry both values; the composite key stops a write from mixing the id of one ticket with the code of another. Evidence: `[011_ticketing_integrity.sql](mobilityticketing-lecture-2-starter/database/postgres/migrations/011_ticketing_integrity.sql)`, `[docs/integrity-map.md](mobilityticketing-lecture-2-starter/docs/integrity-map.md)`.
+**A validation must match both the ticket id and the ticket code.** `validations` has a composite foreign key on `(ticket_id, ticket_code)`. The alternative was a foreign key on `ticket_id` alone. A gate scan can carry both values, and the composite key rejects a write that combines the id of one ticket with the code of another.
 
-**Gateway references are unique locally, and captured payments must carry one.** `UNIQUE` on `payments.external_payment_reference` plus a check that `Captured` rows have a reference. The alternative is to rely on application retries only. That gives the database a local idempotency guard without pretending it proves a real gateway capture. Evidence: same migration and `[constraints_should_fail.sql](mobilityticketing-lecture-2-starter/database/postgres/experiments/constraints_should_fail.sql)`.
+Evidence is in [011_ticketing_integrity.sql](mobilityticketing-lecture-2-starter/database/postgres/migrations/011_ticketing_integrity.sql) and [docs/integrity-map.md](mobilityticketing-lecture-2-starter/docs/integrity-map.md).
+
+**Gateway references are unique in our database, and every captured payment must have one.** `payments.external_payment_reference` has a `UNIQUE` constraint, and a check requires a reference on `Captured` rows. The alternative was to rely on application retries alone. The constraints give the database its own idempotency guard. They do not prove that a real payment gateway captured the payment.
+
+Evidence is in the same migration and in [constraints_should_fail.sql](mobilityticketing-lecture-2-starter/database/postgres/experiments/constraints_should_fail.sql).
 
 ### Lecture 3
 
-**Captured revenue is read from** `payments`**.** The base query or `captured_revenue_for_day` is the correctness path. The alternative was to treat `daily_revenue_by_operator` as the report. The trigger runs on captured inserts only, so it misses seed rows, status changes, refunds, and deletes. Reporting may lag; a purchase write should not also maintain the report. Evidence: `[docs/results.md](mobilityticketing-lecture-3-starter/docs/results.md)`, case 3 (query 122 / 3 vs trigger 36 / 1).
+**Revenue reports read captured revenue from `payments`.** The correct figures come from the base query or from `captured_revenue_for_day`. The alternative was to use `daily_revenue_by_operator` as the report. The trigger behind that table only fires on inserts of captured payments, so it misses seed rows, status changes, refunds, and deletes. We accept that reports may lag, because a purchase write should not also have to update the report.
 
-**A materialized view is an optional cache, not a second ledger.** `daily_captured_revenue` is populated only after `REFRESH`. The alternative is to invest in a complete trigger that handles updates, deletes, and backfill. The experiment showed stale reads until refresh, but rebuild is one command from `payments`. That fits a dashboard that may lag. Evidence: `[022_daily_captured_revenue.sql](mobilityticketing-lecture-3-starter/database/postgres/migrations/022_daily_captured_revenue.sql)`, decision record in `[docs/results.md](mobilityticketing-lecture-3-starter/docs/results.md)`.
+Evidence is in [docs/results.md](mobilityticketing-lecture-3-starter/docs/results.md), case 3 (query 122 / 3 vs trigger 36 / 1).
+
+**The materialized view is an optional cache. `payments` stays the only source of revenue data.** `daily_captured_revenue` holds no data until `REFRESH` runs. The alternative was to build a complete trigger that also handles updates, deletes, and backfill. In the experiment, the view returned stale data until the next refresh, and one command rebuilds it from `payments`. A dashboard that is allowed to lag can live with that.
+
+Evidence is in [022_daily_captured_revenue.sql](mobilityticketing-lecture-3-starter/database/postgres/migrations/022_daily_captured_revenue.sql) and in the decision record in [docs/results.md](mobilityticketing-lecture-3-starter/docs/results.md).
 
 ### Lecture 4
 
-**Expand, backfill, and switch applications before removing** `product_code`**.** Stage 030 adds `product_id`, stage 031 backfills from `product_code`, and legacy removal comes last. The alternative is the one-step change in `[unsafe_change.sql](mobilityticketing-lecture-4-starter/database/postgres/experiments/lecture04/unsafe_change.sql)`, which drops the old link before backfill and cannot make the new column required. Evidence: `[docs/evidence/lecture04/README.md](mobilityticketing-lecture-4-starter/docs/evidence/lecture04/README.md)`.
+**The migration expands, backfills, and switches the applications before it removes `product_code`.** Stage 030 adds `product_id`, stage 031 fills it from `product_code`, and the legacy column goes last. The alternative was the one-step change in [unsafe_change.sql](mobilityticketing-lecture-4-starter/database/postgres/experiments/lecture04/unsafe_change.sql). That script drops the old link before the backfill and cannot make the new column required.
 
-**The new product foreign key starts as** `NOT VALID`**.** `tickets_product_id_fk` is added without validating existing rows, so old writers that leave `product_id` null keep working during rollout. The alternative is to validate immediately, which would reject pre-backfill tickets. Mixed-version readers and writers are exercised in `[experiments/lecture04/](mobilityticketing-lecture-4-starter/database/postgres/experiments/lecture04/)`. Evidence: `[030_expand_product_identity.sql](mobilityticketing-lecture-4-starter/database/postgres/migrations/030_expand_product_identity.sql)`.
+Evidence is in [docs/evidence/lecture04/README.md](mobilityticketing-lecture-4-starter/docs/evidence/lecture04/README.md).
+
+**The new product foreign key starts as `NOT VALID`.** Stage 030 adds `tickets_product_id_fk` without checking existing rows. Old writers that leave `product_id` null keep working during the rollout. Validating at once would reject tickets created before the backfill. The scripts in [experiments/lecture04/](mobilityticketing-lecture-4-starter/database/postgres/experiments/lecture04/) run old and new readers and writers side by side.
+
+Evidence is in [030_expand_product_identity.sql](mobilityticketing-lecture-4-starter/database/postgres/migrations/030_expand_product_identity.sql).
 
 ## One limitation or open question
 
-The seat check does not stop two purchases from taking the last seat. `trips_reserved_seats_valid` only checks the value stored in one `trips` row. Two transactions can both read spare capacity and both increment `reserved_seats`. That limit is Issue 1 in `[docs/integrity-map.md](mobilityticketing-lecture-2-starter/docs/integrity-map.md)`. Next check: reserve the seat in one transaction with `SELECT ... FOR UPDATE`, or with `UPDATE trips SET reserved_seats = reserved_seats + 1 WHERE id = ... AND reserved_seats < capacity`, then run two overlapping purchases against one remaining seat.
+The seat check does not stop two purchases from taking the last seat. `trips_reserved_seats_valid` only checks the value stored in a single `trips` row. Two transactions can both see a free seat and both increment `reserved_seats`. [docs/integrity-map.md](mobilityticketing-lecture-2-starter/docs/integrity-map.md) lists this as Issue 1.
+
+The next step is to reserve the seat inside one transaction. Either lock the row with `SELECT ... FOR UPDATE`, or use a conditional update:
+
+```sql
+UPDATE trips
+SET reserved_seats = reserved_seats + 1
+WHERE id = ... AND reserved_seats < capacity;
+```
+
+Then run two overlapping purchases against a trip with one seat left.
