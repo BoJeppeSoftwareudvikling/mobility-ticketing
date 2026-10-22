@@ -1,0 +1,12 @@
+name: Starter smoke checks
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  starter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --wait postgres
+      - run: docker compose build app tests
+      - run: docker compose run --rm tests --filter Category=Starter
+      - if: always()
+        run: docker compose down

@@ -1,0 +1,35 @@
+name: mobility-l07
+services:
+  postgres:
+    image: postgres:17-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+    environment:
+      POSTGRES_DB: mobility_l07
+      POSTGRES_USER: ${POSTGRES_USER:-mobility}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mobility}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d mobility_l07"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - labdata:/var/lib/postgresql/data
+      - ./database/postgres/lecture07/00-create-test-db.sh:/docker-entrypoint-initdb.d/00-create-test-db.sh:ro
+      - ./database/postgres/lecture07/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/postgres/lecture07/02-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+  app:
+    build: {context: ., target: app}
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      LAB_CONNECTION: Host=postgres;Database=mobility_l07;Username=${POSTGRES_USER:-mobility};Password=${POSTGRES_PASSWORD:-mobility}
+      LAB_EVIDENCE: /evidence
+    volumes: ["./docs/evidence/lecture07:/evidence"]
+  tests:
+    build: {context: ., target: tests}
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      LAB_TEST_CONNECTION: Host=postgres;Database=mobility_l07_test;Username=${POSTGRES_USER:-mobility};Password=${POSTGRES_PASSWORD:-mobility}
+    volumes: ["./docs/evidence/lecture07:/evidence"]
+volumes:
+  labdata:

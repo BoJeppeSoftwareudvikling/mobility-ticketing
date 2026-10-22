@@ -1,0 +1,7 @@
+**/bin/
+**/obj/
+.env
+TestResults/
+docs/evidence/lecture07/logs/*
+!docs/evidence/lecture07/logs/.gitkeep
+docs/evidence/lecture07/tests/

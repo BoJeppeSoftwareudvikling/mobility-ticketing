@@ -1,0 +1,6 @@
+.git
+**/bin
+**/obj
+.env
+docs/evidence/lecture07/logs
+docs/evidence/lecture07/tests

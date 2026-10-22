@@ -1,0 +1,3 @@
+-- Design persistent storage for published dispatch plans in lab07.
+-- Include the plan identity, time window, publication time and displayed values.
+-- The contract defines behavior; the table layout is your choice.
