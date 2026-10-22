@@ -9,6 +9,8 @@ public partial class LectureDbContext(DbContextOptions<LectureDbContext> options
     public DbSet<Route> Routes => Set<Route>();
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<PublishedPlan> PublishedPlans => Set<PublishedPlan>();
+    public DbSet<PublishedPlanRoute> PublishedPlanRoutes => Set<PublishedPlanRoute>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
