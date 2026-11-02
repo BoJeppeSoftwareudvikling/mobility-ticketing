@@ -1,0 +1,11 @@
+psql:queries/indexes.sql:5: NOTICE:  index "trips_scheduled_route_departure_id_idx" does not exist, skipping
+psql:queries/indexes.sql:6: NOTICE:  index "trips_route_id_idx" does not exist, skipping
+DROP INDEX
+DROP INDEX
+CREATE INDEX
+     indexname      |                               indexdef                                |  size   
+--------------------+-----------------------------------------------------------------------+---------
+ trips_pkey         | CREATE UNIQUE INDEX trips_pkey ON lab08.trips USING btree (id)        | 2640 kB
+ trips_route_id_idx | CREATE INDEX trips_route_id_idx ON lab08.trips USING btree (route_id) | 832 kB
+(2 rows)
+
