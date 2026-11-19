@@ -1,0 +1,61 @@
+name: mobility-storage-lab
+
+services:
+  object-store:
+    image: pgsty/silo:RELEASE.2026-11-12T00-00-00Z
+    command: ["server", "/data"]
+    ports:
+      - "127.0.0.1:19011:9000"
+    environment:
+      MINIO_ROOT_USER: mobilityadmin
+      MINIO_ROOT_PASSWORD: mobility-lab-only-change-me
+    volumes:
+      - object-data:/data
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "127.0.0.1:25411:5432"
+    environment:
+      POSTGRES_USER: mobility
+      POSTGRES_PASSWORD: mobility-lab-only-change-me
+      POSTGRES_DB: mobility_l11
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mobility -d mobility_l11"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/setup.sql:/docker-entrypoint-initdb.d/001-setup.sql:ro
+      - ./:/work:ro
+
+  aws:
+    image: public.ecr.aws/aws-cli/aws-cli:2.27.41
+    profiles: ["tools"]
+    working_dir: /work
+    entrypoint:
+      - aws
+      - --endpoint-url
+      - http://object-store:9000
+      - --no-cli-pager
+      - --cli-connect-timeout
+      - "2"
+      - --cli-read-timeout
+      - "3"
+    environment:
+      AWS_ACCESS_KEY_ID: mobilityadmin
+      AWS_SECRET_ACCESS_KEY: mobility-lab-only-change-me
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_CONFIG_FILE: /work/aws-config
+      AWS_MAX_ATTEMPTS: "1"
+      AWS_PAGER: ""
+      AWS_REQUEST_CHECKSUM_CALCULATION: WHEN_REQUIRED
+      AWS_RESPONSE_CHECKSUM_VALIDATION: WHEN_REQUIRED
+    volumes:
+      - ./:/work
+
+volumes:
+  object-data:
+  postgres-data:

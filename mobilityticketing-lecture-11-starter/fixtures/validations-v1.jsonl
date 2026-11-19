@@ -1,0 +1,3 @@
+{"validationId":"V001","ticketId":"TK001","result":"Accepted","validatedUtc":"2026-11-20T00:00:00Z"}
+{"validationId":"V002","ticketId":"TK002","result":"Accepted","validatedUtc":"2026-11-20T08:15:00Z"}
+{"validationId":"V003","ticketId":"TK003","result":"Rejected","validatedUtc":"2026-11-20T12:00:00Z"}
