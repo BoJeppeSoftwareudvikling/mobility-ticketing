@@ -3,5 +3,14 @@
 // Return exactly: PresentMatches, PresentConflicts, or AbsentAtVerification.
 // Compare _id, tripId, status and sourceVersion. Do not query or write here.
 function compareChange(actual, expected) {
-  throw new Error('TODO: compare the successful read with the expected change.');
+  if (actual === null) return 'AbsentAtVerification';
+
+  if (actual._id !== expected._id ||
+      actual.tripId !== expected.tripId ||
+      actual.status !== expected.status ||
+      actual.sourceVersion !== expected.sourceVersion) {
+    return 'PresentConflicts';
+  }
+
+  return 'PresentMatches';
 }
