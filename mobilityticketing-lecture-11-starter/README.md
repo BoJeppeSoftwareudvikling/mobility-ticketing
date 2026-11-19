@@ -48,7 +48,13 @@ The last command should report `"Status": "Enabled"`. If you are resuming an exi
 | `dotnet run --project src/MobilityTicketing.Reports -- --help` | Shows the console app commands. |
 | `dotnet build src/MobilityTicketing.Reports` | Restores packages and builds the app. |
 
-Run the app from the repository root so it can find the fixtures and receipts. The workflow methods in the starter report that they are unfinished until implemented.
+Run the app from the repository root so it can find the fixtures and receipts. The report workflow is implemented. Start with [the short lab recap](docs/recap.md), or read [the implementation and results report](docs/evidence.md) for the design, observed results, and full experiment log.
+
+Run the workflow tests with:
+
+```bash
+dotnet test tests/MobilityTicketing.Reports.Tests
+```
 
 ## Projects
 
