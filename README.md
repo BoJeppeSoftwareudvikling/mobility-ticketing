@@ -1,79 +1,101 @@
-# Compulsory Assignment 1 review guide
+# MobilityTicketing · Compulsory Assignment 2
 
-This repository has four lecture slices, and each folder is a separate Compose project. All four use the database, user, and password `mobility` on `localhost:5432`. Run commands from inside a lecture folder, not from the repository root. Because the slices share the port, stop the containers from the other lectures first.
+Bo Djernis Schrøder (bodsch01) and Jeppe Kjelgaard Lynge Hansen (jephan01)
 
-Group members are Bo Djernis Schrøder (bodsch01) and Jeppe Kjelgaard Lynge Hansen (jephan01).
+For review, check out the full commit SHA listed with the [repository link](https://github.com/BoJeppeSoftwareudvikling/mobility-ticketing) in the hand-in. Run `git rev-parse HEAD` to verify the checkout. The [assignment 1 guide](https://github.com/BoJeppeSoftwareudvikling/mobility-ticketing/blob/5f8ee429c941f0c880419067b5cb1a17cb54e455/README.md) covers lectures 1 to 4.
 
-The submitted commit is `d2605e826e484cb49ec9af2f1cc0472044e9998f`.
+## Setup and reset
 
-For setup, follow the lecture README linked in the table below. To reset a slice, run these commands from its folder:
+Use Docker with Compose and a Bash shell. Lecture 6 also uses the .NET 8 SDK on the host. Run each block from the linked lecture folder. Run one lab at a time and finish with `docker compose down` in that folder. Lectures 5 and 6 both publish MongoDB on port 27017. Each block below starts or resets its own lab fixture.
+
+### 1. Journey search in MongoDB
+
+Each document groups departures for a city, route, directed stop pair and service date. A passenger can read the fare and matching departures together. The same trip can appear under several stop pairs, so cancelling it requires updating every copy. The search applies status and both time bounds to the same array element. [Lecture 5](mobilityticketing-lecture-5-starter/README.md) · [Document model and fixture](mobilityticketing-lecture-5-starter/database/mongodb/lecture05/setup.js) · [Search](mobilityticketing-lecture-5-starter/database/mongodb/lecture05/search.js) · [Cancellation](mobilityticketing-lecture-5-starter/database/mongodb/lecture05/updates.js)
 
 ```bash
-docker compose down -v
-docker compose up -d
+docker compose up -d --wait mongo
+for script in reset search updates search; do
+  docker compose exec -T mongo mongosh --quiet --file "/scripts/lecture05/$script.js"
+done
 ```
 
-## Where to find the work
+The first search returned only `LAB05-T-OK` at 06:20 UTC. It excluded the cancelled 06:10 departure and the departure at the exclusive 07:00 boundary. The update matched and changed two documents. Repeating the search returned `[]`.
 
-| Lecture                                                    | Contents                            | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Lecture 1](mobilityticketing-lecture-1-starter/README.md) | model, workload map and queries     | [ER diagram](mobilityticketing-lecture-1-starter/docs/ERDiagram.png), [schema](mobilityticketing-lecture-1-starter/database/postgres/001_relational_baseline.sql), [queries](mobilityticketing-lecture-1-starter/database/postgres/003_queries.sql.example), [dossier](mobilityticketing-lecture-1-starter/docs/dossier.md)                                                                                                                                                          |
-| [Lecture 2](mobilityticketing-lecture-2-starter/README.md) | constraints and tests               | [migration](mobilityticketing-lecture-2-starter/database/postgres/migrations/011_ticketing_integrity.sql), [rejected writes](mobilityticketing-lecture-2-starter/database/postgres/experiments/constraints_should_fail.sql), [accepted writes](mobilityticketing-lecture-2-starter/database/postgres/experiments/constraints_should_succeed.sql), [integrity map](mobilityticketing-lecture-2-starter/docs/integrity-map.md)                                                         |
-| [Lecture 3](mobilityticketing-lecture-3-starter/README.md) | reporting experiment and comparison | [query](mobilityticketing-lecture-3-starter/database/postgres/queries/base_revenue.sql), [function](mobilityticketing-lecture-3-starter/database/postgres/migrations/020_reporting_function.sql), [trigger](mobilityticketing-lecture-3-starter/database/postgres/migrations/021_daily_revenue_trigger.sql), [view](mobilityticketing-lecture-3-starter/database/postgres/migrations/022_daily_captured_revenue.sql), [results](mobilityticketing-lecture-3-starter/docs/results.md) |
-| [Lecture 4](mobilityticketing-lecture-4-starter/README.md) | migration stages and verification   | [expand](mobilityticketing-lecture-4-starter/database/postgres/migrations/030_expand_product_identity.sql), [backfill](mobilityticketing-lecture-4-starter/database/postgres/migrations/031_backfill_ticket_product.sql), [evidence](mobilityticketing-lecture-4-starter/docs/evidence/lecture04/README.md)                                                                                                                                                                          |
+### 2. Journey-search cache in Redis
 
-## Two decisions worth discussing
+The cache key includes city, directi	
+￼Become member of
+◄ Compulsory Assignment #2 Hand-in
+Jump to activityon and both UTC window bounds. A repeated morning search can reuse the result for 20 seconds by default. In the cancellation experiment we used 300 seconds so we could inspect the stale entry. MongoDB returned an empty result while Redis still returned the cancelled trip. Deleting the exact key after the update made the next search read MongoDB. When Redis was unavailable the search used MongoDB. When both failed it returned a search error. [Lecture 6](mobilityticketing-lecture-6-starter/README.md) · [Cache implementation](mobilityticketing-lecture-6-starter/database/redis/lecture06/CacheLab/CachedJourneySearch.cs) · [Tests](mobilityticketing-lecture-6-starter/database/redis/lecture06/CacheLab.Tests) · [Recorded hits, invalidation and outages](mobilityticketing-lecture-6-starter/docs/evidence/lecture06/README.md)
 
-### Lecture 1
+```bash
+docker compose up -d --wait mongo redis
+docker compose exec -T mongo mongosh --quiet --file /scripts/lecture05/reset.js
+key='search:LAB06:v2:CPH:STOP-NORREPORT:STOP-AIRPORT:2026-10-02T06%3A00%3A00.0000000Z:2026-10-02T07%3A00%3A00.0000000Z'
+docker compose exec -T redis redis-cli DEL "$key"
+search() { CACHE_EXPIRY_SECONDS=300 dotnet run --project database/redis/lecture06/CacheLab -- morning; }
+search
+docker compose exec -T mongo mongosh --quiet < ../mobilityticketing-lecture-5-starter/database/mongodb/lecture05/updates.js
+search
+docker compose exec -T redis redis-cli DEL "$key"
+search
+dotnet test database/redis/lecture06/CacheLab.Tests
+```
 
-**A stop appears once on a route.** The primary key on `route_stops` is `(route_id, stop_id)`. The alternative was `(route_id, stop_sequence)`, which keeps the order and lets the same stop appear twice. The timetable workloads in this slice only need an ordered list of stops, and none of the current routes loop.
+### 3. Route overview in PostgreSQL and EF Core
 
-Evidence is in [001_relational_baseline.sql](mobilityticketing-lecture-1-starter/database/postgres/001_relational_baseline.sql) and [docs/dossier.md](mobilityticketing-lecture-1-starter/docs/dossier.md).
+**Decision 1. Compute the live board in one query.** Dispatchers need one row per route, including routes with no scheduled departure in the requested window. The projection asks PostgreSQL for the count and earliest time. Lazy loading fetched every trip for each route before calculating those values. On four routes the projection reduced five reads to one. On 200 routes it reduced 201 reads to one and loaded zero trip entities instead of 100,000. Both strategies returned identical rows on each fixture. The projection recalculates aggregates on each read. A stored summary would need refreshing after changes and would have to support different time windows. [Lecture 7 setup and tests](mobilityticketing-lecture-7-starter/README.md) · [Live query](mobilityticketing-lecture-7-starter/src/MobilityTicketing.Lecture07/Queries/RouteOverviewQuery.cs) · [Measurements and SQL logs](mobilityticketing-lecture-7-starter/docs/evidence/lecture07/README.md) · [Design alternatives](mobilityticketing-lecture-7-starter/docs/design.md)
 
-**The count report includes routes with no trips.** Query 3 uses a `LEFT JOIN` from `routes` to `trips` and puts the service date in the join condition. An `INNER JOIN` would hide routes that have no trips on that date. Route maintenance needs every route, including days with zero trips.
+```bash
+docker compose up -d --wait postgres
+docker compose build app tests
+for step in reset baseline overview scale baseline overview; do
+  docker compose run --rm app "$step"
+done
+docker compose run --rm tests
+```
 
-Evidence is in [003_queries.sql.example](mobilityticketing-lecture-1-starter/database/postgres/003_queries.sql.example).
+### 4. Departure-search query and index
 
-### Lecture 2
+**Decision 2. Keep the half-open UTC range and the partial index on scheduled trips.** Passengers request the first 20 departures for a route and day, ordered by departure time and ID. The range rewrite alone still scanned all 120,008 trips. A route-only index helped the quieter R-7 but PostgreSQL skipped it for busy R-0. The chosen index supplies the order and lets the scan stop at 20. Median times fell from 6.610 to 0.131 ms for R-7 and from 11.906 to 0.134 ms for R-0. It costs 4,408 kB and adds index maintenance on inserts, rescheduling and cancellations. [Lecture 8 measurement procedure](mobilityticketing-lecture-8-starter/README.md) · [Query](mobilityticketing-lecture-8-starter/queries/candidate.sql) · [Index](mobilityticketing-lecture-8-starter/queries/indexes.sql) · [Plans](mobilityticketing-lecture-8-starter/docs) · [Five-run medians and correctness checks](mobilityticketing-lecture-8-starter/docs/evidence.md)
 
-**A validation must match both the ticket id and the ticket code.** `validations` has a composite foreign key on `(ticket_id, ticket_code)`. The alternative was a foreign key on `ticket_id` alone. A gate scan can carry both values, and the composite key rejects a write that combines the id of one ticket with the code of another.
+```bash
+docker compose up -d --wait postgres
+lab() { docker compose exec -T postgres bash /lab/run.sh "$@"; }
+lab reset
+for route in R-7 R-0; do lab measure baseline "$route"; lab measure candidate "$route"; done
+docker compose exec -T postgres psql -U mobility -d mobility_l08 -c 'CREATE INDEX trips_route_id_idx ON lab08.trips (route_id)'
+for route in R-7 R-0; do lab measure candidate "$route"; done
+lab indexes
+lab check
+for route in R-7 R-0; do lab measure candidate "$route"; done
+```
 
-Evidence is in [011_ticketing_integrity.sql](mobilityticketing-lecture-2-starter/database/postgres/migrations/011_ticketing_integrity.sql) and [docs/integrity-map.md](mobilityticketing-lecture-2-starter/docs/integrity-map.md).
+### 5. Two passengers request the last seat
 
-**Gateway references are unique in our database, and every captured payment must have one.** `payments.external_payment_reference` has a `UNIQUE` constraint, and a check requires a reference on `Captured` rows. The alternative was to rely on application retries alone. The constraints give the database its own idempotency guard. They do not prove that a real payment gateway captured the payment.
+The unsafe read-then-write produced two bookings while the counter showed one reserved seat. The booking function increments the counter only when the trip is scheduled and capacity remains. The booking insert shares the transaction, so rollback releases the seat. A request-ID lock also allows a retry to return the original booking ID. [Lecture 9 setup and session commands](mobilityticketing-lecture-9-starter/README.md) · [Booking function](mobilityticketing-lecture-9-starter/sql/book.sql) · [Checks](mobilityticketing-lecture-9-starter/sql/check.sql) · [Recorded concurrency and rollback results](mobilityticketing-lecture-9-starter/LECTURE-9-RESULTS.md)
 
-Evidence is in the same migration and in [constraints_should_fail.sql](mobilityticketing-lecture-2-starter/database/postgres/experiments/constraints_should_fail.sql).
+```bash
+docker compose up -d --wait postgres
+docker compose exec -T postgres bash /lab/run.sh reset
+docker compose exec -T postgres bash /lab/run.sh check
+```
 
-### Lecture 3
-
-**Revenue reports read captured revenue from `payments`.** The correct figures come from the base query or from `captured_revenue_for_day`. The alternative was to use `daily_revenue_by_operator` as the report. The trigger behind that table only fires on inserts of captured payments, so it misses seed rows, status changes, refunds, and deletes. We accept that reports may lag, because a purchase write should not also have to update the report.
-
-Evidence is in [docs/results.md](mobilityticketing-lecture-3-starter/docs/results.md), case 3 (query 122 / 3 vs trigger 36 / 1).
-
-**The materialized view is an optional cache. `payments` stays the only source of revenue data.** `daily_captured_revenue` holds no data until `REFRESH` runs. The alternative was to build a complete trigger that also handles updates, deletes, and backfill. In the experiment, the view returned stale data until the next refresh, and one command rebuilds it from `payments`. A dashboard that is allowed to lag can live with that.
-
-Evidence is in [022_daily_captured_revenue.sql](mobilityticketing-lecture-3-starter/database/postgres/migrations/022_daily_captured_revenue.sql) and in the decision record in [docs/results.md](mobilityticketing-lecture-3-starter/docs/results.md).
-
-### Lecture 4
-
-**The migration expands, backfills, and switches the applications before it removes `product_code`.** Stage 030 adds `product_id`, stage 031 fills it from `product_code`, and the legacy column goes last. The alternative was the one-step change in [unsafe_change.sql](mobilityticketing-lecture-4-starter/database/postgres/experiments/lecture04/unsafe_change.sql). That script drops the old link before the backfill and cannot make the new column required.
-
-Evidence is in [docs/evidence/lecture04/README.md](mobilityticketing-lecture-4-starter/docs/evidence/lecture04/README.md).
-
-**The new product foreign key starts as `NOT VALID`.** Stage 030 adds `tickets_product_id_fk` without checking existing rows. Old writers that leave `product_id` null keep working during the rollout. Validating at once would reject tickets created before the backfill. The scripts in [experiments/lecture04/](mobilityticketing-lecture-4-starter/database/postgres/experiments/lecture04/) run old and new readers and writers side by side.
-
-Evidence is in [030_expand_product_identity.sql](mobilityticketing-lecture-4-starter/database/postgres/migrations/030_expand_product_identity.sql).
-
-## One limitation or open question
-
-The seat check does not stop two purchases from taking the last seat. `trips_reserved_seats_valid` only checks the value stored in a single `trips` row. Two transactions can both see a free seat and both increment `reserved_seats`. [docs/integrity-map.md](mobilityticketing-lecture-2-starter/docs/integrity-map.md) lists this as Issue 1.
-
-The next step is to reserve the seat inside one transaction. Either lock the row with `SELECT ... FOR UPDATE`, or use a conditional update:
+Open two psql sessions as shown in the lecture setup. In A, run the following and leave the transaction open.
 
 ```sql
-UPDATE trips
-SET reserved_seats = reserved_seats + 1
-WHERE id = ... AND reserved_seats < capacity;
+BEGIN;
+SELECT lab09.book('review-A', 'passenger-A', 'T-LAST');
 ```
 
-Then run two overlapping purchases against a trip with one seat left.
+In B, run the competing request. It waits for A.
+
+```sql
+SELECT lab09.book('review-B', 'passenger-B', 'T-LAST');
+```
+
+Run `COMMIT;` in A. B reports that the trip is full. Run `\i /lab/sql/inspect.sql` in A to verify one booking and one reserved seat. Reset and repeat with `ROLLBACK;` in A to see B take the seat.
+
+## Open question
+
+Can a search put a cancelled trip back in Redis after invalidation? The cancellation experiment checked an entry that already existed. Next we would pause a cache miss after it reads MongoDB, cancel the trip, delete the key, then resume the paused write. A stale hit on the next search would demonstrate the race and give us a repeatable test for version-based invalidation. [Cache experiment and race description](mobilityticketing-lecture-6-starter/docs/evidence/lecture06/README.md)

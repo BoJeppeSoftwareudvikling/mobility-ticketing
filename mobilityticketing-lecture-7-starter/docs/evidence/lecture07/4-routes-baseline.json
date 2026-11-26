@@ -1,0 +1,64 @@
+{
+  "Strategy": "baseline",
+  "FromUtc": "2026-10-23T06:00:00Z",
+  "ToUtc": "2026-10-23T07:00:00Z",
+  "Rows": [
+    {
+      "RouteId": "R1",
+      "RouteName": "City Loop",
+      "ScheduledTripCount": 2,
+      "NextDepartureUtc": "2026-10-23T06:00:00Z"
+    },
+    {
+      "RouteId": "R2",
+      "RouteName": "Campus Line",
+      "ScheduledTripCount": 2,
+      "NextDepartureUtc": "2026-10-23T06:10:00Z"
+    },
+    {
+      "RouteId": "R3",
+      "RouteName": "Airport Express",
+      "ScheduledTripCount": 0,
+      "NextDepartureUtc": null
+    },
+    {
+      "RouteId": "R4",
+      "RouteName": "Harbour Shuttle",
+      "ScheduledTripCount": 0,
+      "NextDepartureUtc": null
+    }
+  ],
+  "ExecutedReadCommands": 5,
+  "MaterializedRoutes": 4,
+  "MaterializedTrips": 9,
+  "Commands": [
+    {
+      "Sql": "SELECT r.id, r.short_name\nFROM lab07.routes AS r\nORDER BY r.id",
+      "Parameters": {}
+    },
+    {
+      "Sql": "SELECT t.id, t.scheduled_departure_utc, t.route_id, t.status\nFROM lab07.trips AS t\nWHERE t.route_id = @__p_0",
+      "Parameters": {
+        "@__p_0": "R1"
+      }
+    },
+    {
+      "Sql": "SELECT t.id, t.scheduled_departure_utc, t.route_id, t.status\nFROM lab07.trips AS t\nWHERE t.route_id = @__p_0",
+      "Parameters": {
+        "@__p_0": "R2"
+      }
+    },
+    {
+      "Sql": "SELECT t.id, t.scheduled_departure_utc, t.route_id, t.status\nFROM lab07.trips AS t\nWHERE t.route_id = @__p_0",
+      "Parameters": {
+        "@__p_0": "R3"
+      }
+    },
+    {
+      "Sql": "SELECT t.id, t.scheduled_departure_utc, t.route_id, t.status\nFROM lab07.trips AS t\nWHERE t.route_id = @__p_0",
+      "Parameters": {
+        "@__p_0": "R4"
+      }
+    }
+  ]
+}

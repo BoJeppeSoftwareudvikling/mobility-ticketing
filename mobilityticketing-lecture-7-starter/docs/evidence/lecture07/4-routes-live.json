@@ -1,0 +1,43 @@
+{
+  "Strategy": "live",
+  "FromUtc": "2026-10-23T06:00:00Z",
+  "ToUtc": "2026-10-23T07:00:00Z",
+  "Rows": [
+    {
+      "RouteId": "R1",
+      "RouteName": "City Loop",
+      "ScheduledTripCount": 2,
+      "NextDepartureUtc": "2026-10-23T06:00:00Z"
+    },
+    {
+      "RouteId": "R2",
+      "RouteName": "Campus Line",
+      "ScheduledTripCount": 2,
+      "NextDepartureUtc": "2026-10-23T06:10:00Z"
+    },
+    {
+      "RouteId": "R3",
+      "RouteName": "Airport Express",
+      "ScheduledTripCount": 0,
+      "NextDepartureUtc": null
+    },
+    {
+      "RouteId": "R4",
+      "RouteName": "Harbour Shuttle",
+      "ScheduledTripCount": 0,
+      "NextDepartureUtc": null
+    }
+  ],
+  "ExecutedReadCommands": 1,
+  "MaterializedRoutes": 0,
+  "MaterializedTrips": 0,
+  "Commands": [
+    {
+      "Sql": "SELECT r.id, r.short_name, (\n    SELECT count(*)::int\n    FROM lab07.trips AS t\n    WHERE r.id = t.route_id AND t.status = 'Scheduled' AND t.scheduled_departure_utc >= @__window_FromUtc_0 AND t.scheduled_departure_utc < @__window_ToUtc_1), (\n    SELECT min(t0.scheduled_departure_utc)\n    FROM lab07.trips AS t0\n    WHERE r.id = t0.route_id AND t0.status = 'Scheduled' AND t0.scheduled_departure_utc >= @__window_FromUtc_0 AND t0.scheduled_departure_utc < @__window_ToUtc_1)\nFROM lab07.routes AS r\nORDER BY r.id",
+      "Parameters": {
+        "@__window_FromUtc_0": "2026-10-23T06:00:00.0000000Z",
+        "@__window_ToUtc_1": "2026-10-23T07:00:00.0000000Z"
+      }
+    }
+  ]
+}
